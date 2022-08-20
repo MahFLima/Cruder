@@ -1,49 +1,103 @@
-import React from 'react';
-import axios from 'axios';
-import * as yup from "yup"
+import React, { useState } from 'react';
+
+import { collection, addDoc } from "firebase/firestore";
 
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form'
 import { Header } from '../components/Header';
+import { db } from '../services/firebaseConfig';
 
-const validationPost = yup.object().shape({
-  title: yup.string().required().max(40, 'maximo de 40 caracteres'),
-  description: yup.string().required().max(150, 'maximo de 150 caracteres'),
-  content: yup.string().required().max(500, 'maximo de 500 caracteres'),
-})
 
 export const Post: React.FC = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm()
-  const url = "http://localhost:5500/api"
   const navigate = useNavigate()
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [value, setValue] = useState(0)
+  const [quantity, setQuantity] = useState(0)
+  const [urlImage, setUrlImage] = useState("")
 
-  const addPost = (data: object) => axios.post(url, data)
-    .then(() => {
-      alert("Deu tudo certo")
-      navigate('/')
-    })
-    .catch((err: Error) => {console.log(err.message)})
+  async function addProduct(e: Event){
+    e.preventDefault()
+    try{
+      const docRef = await addDoc(collection(db, "products"), { 
+        title,
+        description,
+        value,
+        quantity,
+        urlImage
+      })
+      alert('Deu certo')
+      navigate('/feed')
+    }catch(e) {
+      console.error("Error adding document: ", e);
+    }
+  }
 
   return (
     <div>
       <Header />
-      <main className='flex justify-center mt-10 '>
+      <main className='flex justify-center mt-8 '>
 
-        <form onSubmit={handleSubmit(addPost)} className="flex flex-col gap-4 px-10 py-6 bg-slate-600 rounded items-center">
-          <strong className="text-3xl text-center mb-6 block">Criar postagem</strong>
+        <form onSubmit={() => {addProduct}} className="flex flex-col gap-4 px-10 py-6 bg-slate-600 rounded items-center">
+
+          <strong className="text-3xl text-center mb-6 block">Adicionar produto</strong>
+
           <div className="flex flex-col gap-2">
             <label className='text-lg' htmlFor='title'>Title:</label>
-            <input className='px-6 py-2 rounded text-black' type="text" id="title" required max={40} {...register("title")}/>
-            {/* <p>{errors.title?.menssage}</p> */}
+            <input 
+              className='px-6 py-2 rounded text-black' 
+              type="text" id="title" 
+              required 
+              max={40}
+              onChange={(e) => {setTitle(e.target.value)}}
+            />
           </div>
-          <div className="flex flex-col gap-3">
+
+          <div className="flex flex-col gap-2">
             <label className='text-lg' htmlFor='description'>Description:</label>
-            <input className='px-6 py-2 rounded text-black' type="text" id="description" required max={150} {...register("description")}/>
+            <input 
+              className='px-6 py-2 rounded text-black' 
+              type="text" 
+              id="description" 
+              required 
+              max={40}
+              onChange={(e) => {setDescription(e.target.value)}} 
+            />
           </div>
-          <div className="flex flex-col gap-3">
-            <label className='text-lg' htmlFor='content'>Content:</label>
-            <textarea className='px-6 py-2 rounded text-black' id="content" required max={500} {...register("content")}/>
+
+          <div className="flex flex-col gap-2">
+            <label className='text-lg' htmlFor='value'>Value:</label>
+            <input 
+              className='px-6 py-2 rounded text-black' 
+              id="value" 
+              required 
+              type="number" 
+              onChange={(e) => {setValue(parseFloat(e.target.value))}}
+            />
           </div>
+
+          <div className="flex flex-col gap-2">
+            <label className='text-lg' htmlFor='quantity'>Quantity:</label>
+            <input 
+              className='px-6 py-2 rounded text-black' 
+              id="quantity" 
+              required 
+              type="number"
+              onChange={(e) => {setQuantity(parseFloat(e.target.value))}}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className='text-lg' htmlFor='urlImage'>URL Image:</label>
+            <input 
+              className='px-6 py-2 rounded text-black' 
+              id="urlImage" 
+              required 
+              type="text"
+              onChange={(e) => {setUrlImage(e.target.value)}}
+            />
+          </div>
+
           <button className='px-6 py-2 rounded bg-green-500 w-28 hover:opacity-70'>Submit</button>
         </form>
       </main>
